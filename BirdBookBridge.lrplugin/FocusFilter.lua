@@ -61,7 +61,7 @@ end
 
 return {
     sectionForFilterInDialog = function(f)
-        return { title = 'BirdBook Bridge (BBB)',
+        return { title = '波斑鸨插件 (BBB)',
             f:static_text { title = '自动补全拍摄信息，无需逐项选择。支持 α1 II 的 ARW 和相机 JPG。' },
             f:static_text { title = '导出为 JPEG / TIFF / PNG；首次选“所有元数据”并保存预设，以后正常导出。' },
         }
