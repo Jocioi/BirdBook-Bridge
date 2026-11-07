@@ -1,0 +1,10 @@
+.DS_Store
+dist/
+.build/
+*.log
+*.ARW
+*.arw
+*.jpg
+*.jpeg
+*.png
+BirdBookBridge.lrplugin/register-focus
