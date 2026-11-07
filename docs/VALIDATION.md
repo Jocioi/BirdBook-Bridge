@@ -1,5 +1,12 @@
 # Validation and limitations
 
+## Version 1.3.3 — Chinese name, 2026-11-07
+
+- Chinese display name changed to 波斑鸨插件 (BBB), keeping the toolkit ID, filter ID, installation directory and XMP namespaces. Metadata-processing source and compiled helper are unchanged from 1.3.2.
+- Passed 75 generated-image format checks, 60 metadata checks, 21 mocked Lua export-flow checks, 5 Swift registration checks and 4 compiled-helper CLI checks (165 total). Vendor hashes passed.
+- The first sandboxed registration run could not access the system image-registration service; rerunning the registration, metadata and helper checks with normal host service access passed. No production behavior change was made for this environment limitation.
+- Lightroom UI export acceptance, real camera-JPEG acceptance and Intel hardware execution remain pending. No real photographs are distributed.
+
 ## Version 1.3.2 — publication checks, 2026-11-07
 
 - 60 metadata assertions and 75 generated-image format assertions pass, including all 51 writable capture fields, firmware validation, retired-field cleanup, native filename/rating preservation and source-file facts.
