@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.3 — 2026-11-07
+
+- 中文名改为「波斑鸨插件」，Lightroom 管理器与导出动作使用该名称；英文名 BirdBook Bridge、简称 BBB 保留。
+- 保留插件标识、安装目录及元数据命名空间，元数据处理行为与 1.3.2 相同。
+- 添加官网介绍与下载页地址。
+
 ## 1.3.2 — 2026-11-06
 
 - Expand optional capture/source fields from 22 to 51, including validated camera firmware, APS-C mode, original-file facts, white-balance adjustments, colour settings and lens corrections.

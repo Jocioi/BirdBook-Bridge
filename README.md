@@ -1,10 +1,12 @@
-# BirdBook Bridge · BBB
+# 波斑鸨插件 · BirdBook Bridge（BBB）
 
-当前版本：**1.3.2**。
+当前版本：**1.3.3**。
 
 **把原片中 Lightroom 没有带出的拍摄信息，补进导出成片。**
 
-BirdBook Bridge 是一个 Lightroom Classic 导出后处理插件，源自「LR小鸟书信息补全」。它从对应的索尼原片读取拍摄设置，写入导出文件，方便小鸟书（BirdBook）或其他支持相应元数据的软件读取。
+波斑鸨插件（BirdBook Bridge，简称 BBB）是一个 Lightroom Classic 导出后处理插件，源自「LR小鸟书信息补全」。它从对应的索尼原片读取拍摄设置，写入导出文件，方便小鸟书（BirdBook）或其他支持相应元数据的软件读取。
+
+官网与下载：[bird.uioiu.com/BirdBook-Bridge](https://bird.uioiu.com/BirdBook-Bridge)。
 
 先了解用途、支持范围和使用边界，可阅读 [中文项目说明](项目说明.md)。
 
@@ -44,8 +46,8 @@ LR 已导出的标准字段由读取软件直接使用，BBB 不重复保存；�
 
 首次完成三步：
 
-1. **添加插件。**从 [Releases](https://github.com/Jocioi/BirdBook-Bridge/releases) 下载 `BirdBook-Bridge-1.3.2.zip` 并解压，将 `BirdBookBridge.lrplugin` 放到固定目录，在 Lightroom Classic → **文件 → 增效工具管理器 / Plug-in Manager → 添加** 中选择并启用。也可按下节从源码构建。
-2. **加入导出流程。**在导出窗口的 **后期处理动作 / Post-Process Actions** 中插入 **BirdBook Bridge (BBB)**。
+1. **添加插件。**从 [Releases](https://github.com/Jocioi/BirdBook-Bridge/releases) 下载 `BirdBook-Bridge-1.3.3.zip` 并解压，将 `BirdBookBridge.lrplugin` 放到固定目录，在 Lightroom Classic → **文件 → 增效工具管理器 / Plug-in Manager → 添加** 中选择并启用。也可按下节从源码构建。
+2. **加入导出流程。**在导出窗口的 **后期处理动作 / Post-Process Actions** 中插入 **波斑鸨插件 (BBB)**。
 3. **保存预设。**选择 **JPEG、TIFF 或 PNG**，元数据选择 **所有元数据 / All Metadata**，保存为自己的导出预设，例如「BBB 信息补全」。
 
 之后只需：**选照片 → 选择 BBB 导出预设 → 导出**。无需手动配对原片或逐项勾选补充字段。
@@ -69,7 +71,7 @@ sh scripts/build.sh
 sh scripts/test.sh
 ```
 
-构建结果：`dist/BirdBookBridge.lrplugin` 和 `dist/BirdBook-Bridge-1.3.2.zip`。辅助程序分别编译 arm64 / x86_64，再合成通用二进制。构建脚本不安装插件，也不修改 Lightroom 设置。
+构建结果：`dist/BirdBookBridge.lrplugin` 和 `dist/BirdBook-Bridge-1.3.3.zip`。辅助程序分别编译 arm64 / x86_64，再合成通用二进制。构建脚本不安装插件，也不修改 Lightroom 设置。
 
 本项目提供源码及本地构建产物，不含 Apple 开发者分发签名或公证。请按系统正常安全流程处理下载提示，不要全局关闭安全保护。
 
