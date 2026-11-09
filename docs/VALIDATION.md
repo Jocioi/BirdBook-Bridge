@@ -1,5 +1,12 @@
 # Validation and limitations
 
+## Version 1.3.4 — portrait crop fix, 2026-11-09
+
+- Passed 76 metadata/geometry assertions, 75 generated-format assertions, 15 Swift registration cases and 4 compiled-helper CLI cases. All-orientation asymmetric crops and rejection of locally mismatched imagery are covered; vendor hashes match. Lua flow code is unchanged; 21 mocked export-flow cases also pass using Lightroom’s installed Lua runtime in an isolated process.
+- A real portrait ARW/export pair with EXIF orientation 8, rectangular cropping and Adobe lens-profile correction was processed on a copy. Before: unsupported-edits. After: registered-reference. The production BirdBook reader accepted its bounded reference rectangle. Original source/export files were not modified.
+- Local frame correlation exceeded 0.99 and both contextual side checks exceeded 0.97 in the diagnostic run; this does not establish pixel-exact optical calibration. Real-photo media remains outside the distributable package.
+- The user confirmed the previously failing photo now works with the updated installed plugin, which shares this focus-frame implementation. This is user-reported acceptance, not an agent-observed full export/UI acceptance of every supported format. Intel helper compiled but has not run on Intel hardware.
+
 ## Version 1.3.3 — Chinese name, 2026-11-07
 
 - Chinese display name changed to 波斑鸨插件 (BBB), keeping the toolkit ID, filter ID, installation directory and XMP namespaces. Metadata-processing source and compiled helper are unchanged from 1.3.2.

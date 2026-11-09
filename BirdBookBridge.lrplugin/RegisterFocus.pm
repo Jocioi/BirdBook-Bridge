@@ -9,7 +9,7 @@ sub for_export {
     my ($raw, $jpeg, $src, $dst, $helper) = @_;
     return if ($src->{FileType} // '') eq 'JPEG';
     return unless -x $helper && ($dst->{LensProfileEnable} // 0) == 1
-        && ($src->{Orientation} // 1) == 1 && defined($src->{DistortionCorrection})
+        && ($src->{Orientation} // 1) =~ /^[1-8]$/ && defined($src->{DistortionCorrection})
         && $src->{DistortionCorrection} == 0 && ($src->{DistortionCorrectionSetting} // -1) == 0;
     # Keep every other geometry guard; registration is only validated for mild lens correction.
     my %uncorrected = %$dst;
@@ -27,7 +27,8 @@ sub for_export {
     open my $preview, '>:raw', "$dir/preview.jpg" or return;
     print {$preview} $$data; close $preview or return;
     open my $config, '>', "$dir/input.json" or return;
-    print {$config} encode_json({crop=>[$l,$t,$r-$l,$b-$t], frame=>[map {0+$_} @frame[3..6]]});
+    print {$config} encode_json({crop=>[$l,$t,$r-$l,$b-$t], frame=>[map {0+$_} @frame[3..6]],
+        orientation=>0+($src->{Orientation} // 1)});
     close $config or return;
     # List-form process launch preserves filenames, with no shell evaluation.
     my $pid = open my $output, '-|', $helper, "$dir/preview.jpg", $jpeg, "$dir/input.json";

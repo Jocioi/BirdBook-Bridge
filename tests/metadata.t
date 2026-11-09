@@ -45,7 +45,22 @@ my %bad=(%source,FocusLocation=>'bad data');
 is((BirdBook::FocusFrame::for_export(\%bad,\%export))[0],'missing','invalid coordinates rejected');
 my %portrait=(%source,Orientation=>6);
 is((BirdBook::FocusFrame::for_export(\%portrait,\%export))[0],'available','uncropped orientation supported');
-is((BirdBook::FocusFrame::for_export(\%portrait,\%crop))[0],'unsupported-edits','rotated crop guarded');
+is((BirdBook::FocusFrame::for_export(\%portrait,\%crop))[0],'available','portrait rectangular crop supported');
+my @expected=(
+    [0.48,11/30,0.16,2/15], [0.36,11/30,0.16,2/15],
+    [0.36,0.5,0.16,2/15], [0.48,0.5,0.16,2/15],
+    [11/30,0.48,2/15,0.16], [0.5,0.48,2/15,0.16],
+    [0.5,0.36,2/15,0.16], [11/30,0.36,2/15,0.16]);
+for my $o (1..8) {
+    my %s=(%source,Orientation=>$o,FocusLocation=>'1200 800 720 360',FocusFrameSize=>'120 80 257');
+    my %d=(%crop,CropLeft=>0.25,CropTop=>0.125,CropRight=>0.875,CropBottom=>0.875,
+        ImageWidth=>($o>=5?600:750),ImageHeight=>($o>=5?750:600));
+    my($status,$value)=BirdBook::FocusFrame::for_export(\%s,\%d);
+    is($status,'available',"asymmetric crop orientation $o accepted");
+    my @actual=split ' ',($value//'');
+    ok(@actual==7 && !(grep { abs($actual[$_+3]-$expected[$o-1][$_])>0.00000001 } 0..3),
+        "asymmetric crop orientation $o preserves recorded frame coordinates");
+}
 ok(!defined(BirdBook::RegisterFocus::for_export('unused','unused',\%source,\%export,'/nonexistent/bbb-helper')),
    'missing registration helper fails closed');
 is(BirdBook::Info::clean('  AF-C  '),'AF-C','text trimmed');

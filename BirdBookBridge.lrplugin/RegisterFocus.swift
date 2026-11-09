@@ -9,17 +9,18 @@ import simd
 struct Input: Decodable {
     let crop: [Double]
     let frame: [Double]
+    var orientation: Int? = nil
 }
 struct Output: Encodable { let rect: [Double]; let correlation: Double }
 enum Failure: Error { case invalid, unreliable }
 let context = CIContext(options: [.cacheIntermediates: false])
 
-func image(_ path: String) throws -> CIImage {
+func image(_ path: String, applyOrientation: Bool = true) throws -> CIImage {
     guard let source = CGImageSourceCreateWithURL(URL(fileURLWithPath: path) as CFURL, nil),
           let thumbnail = CGImageSourceCreateThumbnailAtIndex(source, 0, [
             kCGImageSourceCreateThumbnailFromImageAlways: true,
             kCGImageSourceThumbnailMaxPixelSize: 1536,
-            kCGImageSourceCreateThumbnailWithTransform: true
+            kCGImageSourceCreateThumbnailWithTransform: applyOrientation
           ] as CFDictionary) else { throw Failure.invalid }
     return CIImage(cgImage: thumbnail)
 }
@@ -66,16 +67,20 @@ func correlation(_ a: [Float], _ b: [Float], size: CGSize, area: CGRect) throws 
     return score
 }
 func register(preview: CIImage, final: CIImage, input: Input) throws -> Output {
-    guard validRect(input.crop), validRect(input.frame) else { throw Failure.invalid }
+    let orientation = input.orientation ?? 1
+    guard validRect(input.crop), validRect(input.frame), (1...8).contains(orientation) else { throw Failure.invalid }
     let crop = CGRect(x: input.crop[0]*preview.extent.width,
                       y: (1-input.crop[1]-input.crop[3])*preview.extent.height,
                       width: input.crop[2]*preview.extent.width, height: input.crop[3]*preview.extent.height)
     let size = CGSize(width: (512*final.extent.width/max(final.extent.width,final.extent.height)).rounded(),
                       height: (512*final.extent.height/max(final.extent.width,final.extent.height)).rounded())
+    // Crop in source axes, then apply the RAW orientation once, independently of preview JPEG metadata.
+    let upright = preview.cropped(to: crop).transformed(by: .init(translationX: -crop.minX, y: -crop.minY))
+        .oriented(forExifOrientation: Int32(orientation))
     guard min(size.width,size.height) >= 64,
-          abs((crop.width/crop.height)/(final.extent.width/final.extent.height)-1) < 0.01 else { throw Failure.invalid }
-    let a = preview.cropped(to: crop).transformed(by: .init(translationX: -crop.minX, y: -crop.minY))
-        .transformed(by: .init(scaleX: size.width/crop.width, y: size.height/crop.height))
+          abs((upright.extent.width/upright.extent.height)/(final.extent.width/final.extent.height)-1) < 0.01 else { throw Failure.invalid }
+    let a = upright.transformed(by: .init(translationX: -upright.extent.minX, y: -upright.extent.minY))
+        .transformed(by: .init(scaleX: size.width/upright.extent.width, y: size.height/upright.extent.height))
     let b = final.transformed(by: .init(scaleX: size.width/final.extent.width, y: size.height/final.extent.height))
     let m = try matrix(a,b), reverse = try matrix(b,a)
     let frame = CGRect(x: input.frame[0]*size.width, y: (1-input.frame[1]-input.frame[3])*size.height,
@@ -104,9 +109,10 @@ func register(preview: CIImage, final: CIImage, input: Input) throws -> Output {
     let pa = pixels(aligned,size), pb = pixels(b,size)
     let roi = box.insetBy(dx:-max(12,box.width*0.25),dy:-max(12,box.height*0.25))
     let score = try correlation(pa,pb,size:size,area:roi)
-    // Validate both sides independently so a good match elsewhere cannot hide a wrong frame.
-    _ = try correlation(pa,pb,size:size,area:CGRect(x:roi.minX,y:roi.minY,width:roi.width/2,height:roi.height))
-    _ = try correlation(pa,pb,size:size,area:CGRect(x:roi.midX,y:roi.minY,width:roi.width/2,height:roi.height))
+    // Keep the close frame check, and give each independent side enough context for small AF boxes.
+    let anchors = box.insetBy(dx:-max(24,box.width*0.25),dy:-max(24,box.height*0.25))
+    _ = try correlation(pa,pb,size:size,area:CGRect(x:anchors.minX,y:anchors.minY,width:anchors.width/2,height:anchors.height))
+    _ = try correlation(pa,pb,size:size,area:CGRect(x:anchors.midX,y:anchors.minY,width:anchors.width/2,height:anchors.height))
     return Output(rect:rect, correlation:score)
 }
 
@@ -115,6 +121,6 @@ DispatchQueue.global().asyncAfter(deadline: .now()+10) { exit(2) }
 do {
     guard CommandLine.arguments.count == 4 else { throw Failure.invalid }
     let input = try JSONDecoder().decode(Input.self, from: Data(contentsOf: URL(fileURLWithPath: CommandLine.arguments[3])))
-    let result = try register(preview:image(CommandLine.arguments[1]), final:image(CommandLine.arguments[2]), input:input)
+    let result = try register(preview:image(CommandLine.arguments[1], applyOrientation: false), final:image(CommandLine.arguments[2]), input:input)
     FileHandle.standardOutput.write(try JSONEncoder().encode(result))
 } catch { exit(2) }

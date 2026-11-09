@@ -1,6 +1,6 @@
 # 波斑鸨插件 · BirdBook Bridge（BBB）
 
-当前版本：**1.3.3**。
+公开版本：**1.3.4 开发预览版**。
 
 **把原片中 Lightroom 没有带出的拍摄信息，补进导出成片。**
 
@@ -46,7 +46,7 @@ LR 已导出的标准字段由读取软件直接使用，BBB 不重复保存；�
 
 首次完成三步：
 
-1. **添加插件。**从 [Releases](https://github.com/Jocioi/BirdBook-Bridge/releases) 下载 `BirdBook-Bridge-1.3.3.zip` 并解压，将 `BirdBookBridge.lrplugin` 放到固定目录，在 Lightroom Classic → **文件 → 增效工具管理器 / Plug-in Manager → 添加** 中选择并启用。也可按下节从源码构建。
+1. **添加插件。**从 [Releases](https://github.com/Jocioi/BirdBook-Bridge/releases) 下载 `BirdBook-Bridge-1.3.4.zip` 并解压，将 `BirdBookBridge.lrplugin` 放到固定目录，在 Lightroom Classic → **文件 → 增效工具管理器 / Plug-in Manager → 添加** 中选择并启用。也可按下节从源码构建。
 2. **加入导出流程。**在导出窗口的 **后期处理动作 / Post-Process Actions** 中插入 **波斑鸨插件 (BBB)**。
 3. **保存预设。**选择 **JPEG、TIFF 或 PNG**，元数据选择 **所有元数据 / All Metadata**，保存为自己的导出预设，例如「BBB 信息补全」。
 
@@ -71,7 +71,7 @@ sh scripts/build.sh
 sh scripts/test.sh
 ```
 
-构建结果：`dist/BirdBookBridge.lrplugin` 和 `dist/BirdBook-Bridge-1.3.3.zip`。辅助程序分别编译 arm64 / x86_64，再合成通用二进制。构建脚本不安装插件，也不修改 Lightroom 设置。
+构建结果：`dist/BirdBookBridge.lrplugin` 和 `dist/BirdBook-Bridge-1.3.4.zip`。辅助程序分别编译 arm64 / x86_64，再合成通用二进制。构建脚本不安装插件，也不修改 Lightroom 设置。
 
 本项目提供源码及本地构建产物，不含 Apple 开发者分发签名或公证。请按系统正常安全流程处理下载提示，不要全局关闭安全保护。
 
@@ -79,6 +79,7 @@ sh scripts/test.sh
 
 - 原片必须具有有效的自动对焦模式、坐标和框尺寸；不会靠识别鸟的位置来编造对焦框。
 - 普通缩放、符合条件的矩形裁切和方向变换可以直接换算；框不完整落在裁切区内时不输出。
+- 1.3.4 修复竖拍后裁切被误拒绝的问题：先按原片坐标裁切，再转换方向。竖拍叠加轻微配置文件校正也可进入参考框匹配，仍需通过局部纹理与双向位置检查。
 - **轻微镜头配置文件校正**可以尝试将原片内嵌预览与导出成片匹配，成功时输出 **参考对焦框**。它是估计位置，不能用于证明像素级对焦精度。
 - 旋转裁切、透视调整、手动畸变、已校正的相机预览等组合仍有保护限制；低纹理、不匹配或无法可靠验证的图片不会输出参考框。
 - 参考匹配每张最多等待约 10 秒；失败时仍可保留其他拍摄设置和明确的状态。

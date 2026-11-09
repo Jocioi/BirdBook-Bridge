@@ -26,7 +26,15 @@ sub for_export {
     my $orientation = $src->{Orientation} // 1;
     return ('unsupported-edits') unless defined $dst->{HasCrop};
     my $has_crop = $dst->{HasCrop} =~ /^(True|1)$/i;
-    return ('unsupported-edits') if $has_crop && $orientation != 1;
+    # Lightroom crop bounds use the unrotated source axes, including portrait RAWs.
+    my ($left,$top,$right,$bottom) = $has_crop
+        ? map { $dst->{$_} } qw(CropLeft CropTop CropRight CropBottom) : (0,0,1,1);
+    return ('unsupported-edits') if grep { !defined($_) || !/^[-+]?\d*\.?\d+$/ } ($left,$top,$right,$bottom);
+    return ('unsupported-edits') unless $left >= 0 && $top >= 0 && $right <= 1 && $bottom <= 1 && $right > $left && $bottom > $top;
+    my ($cw,$ch) = ($right-$left,$bottom-$top);
+    return ('outside-crop') if $x < $left || $y < $top || $x+$w > $right || $y+$h > $bottom;
+    ($x,$y,$w,$h) = (($x-$left)/$cw,($y-$top)/$ch,$w/$cw,$h/$ch);
+    ($sw,$sh) = ($sw*$cw,$sh*$ch);
     if ($orientation == 2) { $x = 1-$x-$w; }
     elsif ($orientation == 3) { ($x,$y) = (1-$x-$w,1-$y-$h); }
     elsif ($orientation == 4) { $y = 1-$y-$h; }
@@ -36,16 +44,9 @@ sub for_export {
     elsif ($orientation == 8) { ($x,$y,$w,$h) = ($y,1-$x-$w,$h,$w); }
     elsif ($orientation != 1) { return ('unsupported-edits'); }
     ($sw,$sh) = ($sh,$sw) if $orientation >= 5;
-    my ($left,$top,$right,$bottom) = $has_crop
-        ? map { $dst->{$_} } qw(CropLeft CropTop CropRight CropBottom) : (0,0,1,1);
-    return ('unsupported-edits') if grep { !defined($_) || !/^[-+]?\d*\.?\d+$/ } ($left,$top,$right,$bottom);
-    return ('unsupported-edits') unless $left >= 0 && $top >= 0 && $right <= 1 && $bottom <= 1 && $right > $left && $bottom > $top;
-    my ($cw,$ch) = ($right-$left,$bottom-$top);
-    return ('outside-crop') if $x < $left || $y < $top || $x+$w > $right || $y+$h > $bottom;
     my ($dw,$dh) = @{$dst}{qw(ImageWidth ImageHeight)};
     return ('unsupported-edits') unless $dw && $dh && ($dst->{Orientation} // 1) == 1;
-    return ('unsupported-edits') if abs(($dw/$dh) / (($sw*$cw)/($sh*$ch)) - 1) > 0.005;
-    ($x,$y,$w,$h) = (($x-$left)/$cw,($y-$top)/$ch,$w/$cw,$h/$ch);
+    return ('unsupported-edits') if abs(($dw/$dh) / ($sw/$sh) - 1) > 0.005;
     return ('available', join(' ', 1,$dw,$dh,map { sprintf('%.10f',$_) } ($x,$y,$w,$h)));
 }
 1;

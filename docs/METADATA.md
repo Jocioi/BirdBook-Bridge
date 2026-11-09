@@ -102,6 +102,8 @@ version width height x y boxWidth boxHeight
 
 Version is `1`. Dimensions refer to the exported image. Rectangle values are fractions of final image dimensions, with origin at the **top left**, and must remain within `[0,1]`. The frame and reference-frame fields are cleared before writing the result of a new run.
 
+From 1.3.4, Lightroom rectangular crop bounds are applied in unrotated RAW axes before the EXIF orientation transform. Preview registration uses the same order and explicitly applies the RAW orientation once; extracted preview JPEG metadata cannot cause a second rotation. Arbitrary CropAngle, perspective adjustments and unvalidated source-JPEG geometry remain guarded. Profile-corrected output is still a reference estimate, never labelled as an exact frame.
+
 Camera JPEG sources may already contain geometric corrections not described by the recorded AF coordinates. This version preserves their available capture metadata but does not emit a frame or attempt preview registration for them. The helper reports partial completion when no frame can be emitted.
 
 The command-line helper emits one result token after a successful run: `completed`, `partial-focus`, or `unsupported-camera`. Errors exit nonzero. The Lightroom filter captures the token in a temporary report, deletes that report, and presents one batch result. Unknown or missing tokens are treated as failure rather than silent success.

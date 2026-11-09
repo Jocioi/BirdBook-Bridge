@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.3.4 — 2026-11-09
+
+- 修复竖拍照片在裁切并开启镜头配置文件校正后，对焦框被误判为不可还原的问题；显示结果仍为参考对焦框。
+- 用户已确认此前出现问题的照片能够显示对焦框。
+- Map rectangular crops in unrotated RAW axes before applying EXIF orientation, including portrait photos.
+- Enable the existing guarded lens-profile registration path for oriented RAWs. Ignore extracted preview JPEG orientation and apply the RAW orientation exactly once.
+- Keep the close AF-region correlation check and give independent side checks more context for small AF boxes. Correlation, texture, displacement and round-trip thresholds remain unchanged.
+- Add all-orientation asymmetric-crop tests, local-mismatch rejection and invalid-orientation checks. Existing metadata/privacy behavior is unchanged.
+
 ## 1.3.3 — 2026-11-07
 
 - 中文名改为「波斑鸨插件」，Lightroom 管理器与导出动作使用该名称；英文名 BirdBook Bridge、简称 BBB 保留。
