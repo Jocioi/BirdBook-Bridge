@@ -1,0 +1,29 @@
+name: Attach verified BBB 1.3.4 release files
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/publish-bbb-134.yml]
+permissions:
+  contents: write
+jobs:
+  attach:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Download and verify the already-built package
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --silent --show-error --max-time 120 https://bird.uioiu.com/BirdBook-Bridge/download --output BirdBook-Bridge-1.3.4.zip
+          echo '0297bd9049c392dd99fd8adbc17a34ce9da5693a5b17594cafddc27d32369af9  BirdBook-Bridge-1.3.4.zip' > SHA256SUMS.txt
+          sha256sum --check SHA256SUMS.txt
+          unzip -t BirdBook-Bridge-1.3.4.zip > /dev/null
+      - name: Attach exact files to the existing draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 120 --request POST --header "Authorization: Bearer $GH_TOKEN" --header 'Content-Type: application/zip' --data-binary @BirdBook-Bridge-1.3.4.zip 'https://uploads.github.com/repos/Jocioi/BirdBook-Bridge/releases/438696632/assets?name=BirdBook-Bridge-1.3.4.zip' > zip-asset.json
+          curl --fail --silent --show-error --max-time 60 --request POST --header "Authorization: Bearer $GH_TOKEN" --header 'Content-Type: text/plain' --data-binary @SHA256SUMS.txt 'https://uploads.github.com/repos/Jocioi/BirdBook-Bridge/releases/438696632/assets?name=SHA256SUMS.txt' > checksum-asset.json
+          python3 -c "import json; a=json.load(open('zip-asset.json')); assert a['state']=='uploaded'; assert a['digest']=='sha256:0297bd9049c392dd99fd8adbc17a34ce9da5693a5b17594cafddc27d32369af9'; print('Verified package attached:',a['name'],a['size'])"
