@@ -10,6 +10,7 @@ struct Input: Decodable {
     let crop: [Double]
     let frame: [Double]
     var orientation: Int? = nil
+    var angle: Double? = nil
 }
 struct Output: Encodable { let rect: [Double]; let correlation: Double }
 enum Failure: Error { case invalid, unreliable }
@@ -68,14 +69,24 @@ func correlation(_ a: [Float], _ b: [Float], size: CGSize, area: CGRect) throws 
 }
 func register(preview: CIImage, final: CIImage, input: Input) throws -> Output {
     let orientation = input.orientation ?? 1
-    guard validRect(input.crop), validRect(input.frame), (1...8).contains(orientation) else { throw Failure.invalid }
-    let crop = CGRect(x: input.crop[0]*preview.extent.width,
-                      y: (1-input.crop[1]-input.crop[3])*preview.extent.height,
-                      width: input.crop[2]*preview.extent.width, height: input.crop[3]*preview.extent.height)
+    guard input.crop.count == 4, input.crop.allSatisfy(\.isFinite),
+          [input.crop[0],input.crop[1],input.crop[0]+input.crop[2],input.crop[1]+input.crop[3]].allSatisfy({ (0...1).contains($0) }),
+          validRect(input.frame), (1...8).contains(orientation) else { throw Failure.invalid }
+    let angle = input.angle ?? 0
+    guard angle.isFinite, abs(angle) <= 45 else { throw Failure.invalid }
+    let rotation = CGAffineTransform(rotationAngle: angle * .pi / 180)
+    let topLeft = CGPoint(x: input.crop[0]*preview.extent.width,
+                          y: (1-input.crop[1])*preview.extent.height).applying(rotation)
+    let bottomRight = CGPoint(x: (input.crop[0]+input.crop[2])*preview.extent.width,
+                              y: (1-input.crop[1]-input.crop[3])*preview.extent.height).applying(rotation)
+    let crop = CGRect(x: topLeft.x, y: bottomRight.y,
+                      width: bottomRight.x-topLeft.x, height: topLeft.y-bottomRight.y)
+    guard crop.width > 0, crop.height > 0 else { throw Failure.invalid }
     let size = CGSize(width: (512*final.extent.width/max(final.extent.width,final.extent.height)).rounded(),
                       height: (512*final.extent.height/max(final.extent.width,final.extent.height)).rounded())
-    // Crop in source axes, then apply the RAW orientation once, independently of preview JPEG metadata.
-    let upright = preview.cropped(to: crop).transformed(by: .init(translationX: -crop.minX, y: -crop.minY))
+    // Undo the tilted crop in source axes, then apply EXIF orientation exactly once.
+    let upright = preview.transformed(by: rotation).cropped(to: crop)
+        .transformed(by: .init(translationX: -crop.minX, y: -crop.minY))
         .oriented(forExifOrientation: Int32(orientation))
     guard min(size.width,size.height) >= 64,
           abs((upright.extent.width/upright.extent.height)/(final.extent.width/final.extent.height)-1) < 0.01 else { throw Failure.invalid }

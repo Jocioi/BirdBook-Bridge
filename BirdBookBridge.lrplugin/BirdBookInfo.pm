@@ -42,8 +42,8 @@ sub clean_setting {
     my ($tag,$raw,$existing)=@_;my $value=clean($raw);return undef unless defined $value;
     # EXIF already expresses Auto/Manual; retain Sony's more specific presets when available.
     if($tag eq 'WhiteBalance' && ref($existing) eq 'HASH' && defined $existing->{WhiteBalance}) {
-        return undef if ($value eq 'Auto' && $existing->{WhiteBalance} == 0)
-            || ($value eq 'Manual' && $existing->{WhiteBalance} == 1);
+        return undef if ($value eq 'Auto' && $existing->{WhiteBalance} =~ /^(0|Auto)$/)
+            || ($value eq 'Manual' && $existing->{WhiteBalance} =~ /^(1|Manual)$/);
     }
     if($tag eq 'SourceCameraSoftware') {
         return undef unless $value =~ /^ILCE-1M2 v[0-9]+(?:\.[0-9]+)*$/i;

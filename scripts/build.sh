@@ -22,6 +22,6 @@ for name in ['LICENSE', 'THIRD_PARTY_NOTICES.md', 'vendor-manifest.json', 'é¡¹ç›
 shutil.copytree(root / 'licenses', dest / 'licenses')
 shutil.copytree(root / 'docs', dest / 'docs')
 shutil.copy2(root / 'README.md', dest / 'INSTALL.md')
-shutil.make_archive(str(root / 'dist/BirdBook-Bridge-1.3.4'), 'zip', root / 'dist', 'BirdBookBridge.lrplugin')
-print('Built dist/BirdBook-Bridge-1.3.4.zip')
+shutil.make_archive(str(root / 'dist/BirdBook-Bridge-1.3.5'), 'zip', root / 'dist', 'BirdBookBridge.lrplugin')
+print('Built dist/BirdBook-Bridge-1.3.5.zip')
 PY

@@ -60,8 +60,31 @@ do {
         input: Input(crop: [0,0,1,1], frame: [0.4,0.3,0.2,0.2], orientation: 9))
     fatalError("invalid orientation accepted")
 } catch { }
+// Build the expected output from a known crop centre and size, independently of the XMP diagonal mapping.
+let wide = sample.transformed(by: .init(scaleX: 1.5, y: 1))
+for angle in [-45.0, -36.87, -15.0, -1.83, 1.83, 15.0, 36.87, 45.0] { for orientation in 1...8 {
+    let radians = angle * Double.pi / 180, c = cos(radians), s = sin(radians)
+    let width = 320.0, height = 220.0, cx = 390.0, cy = 240.0
+    let dx = c*width-s*height, dy = s*width+c*height
+    let centre = CGPoint(x: cx, y: 512-cy).applying(.init(rotationAngle: radians))
+    let expected = wide.transformed(by: .init(rotationAngle: radians))
+        .cropped(to: CGRect(x: centre.x-width/2, y: centre.y-height/2, width: width, height: height))
+        .transformed(by: .init(translationX: width/2-centre.x, y: height/2-centre.y))
+        .oriented(forExifOrientation: Int32(orientation))
+    let straight = Input(crop: [(cx-dx/2)/768,(cy-dy/2)/512,dx/768,dy/512],
+                         frame: [0.4,0.3,0.2,0.2], orientation: orientation, angle: angle)
+    let mapped = try register(preview: wide, final: expected, input: straight)
+    assert(zip(mapped.rect,straight.frame).allSatisfy { abs($0-$1) < 0.003 })
+} }
+for angle in [Double.nan, Double.infinity, -46, 46] {
+    do {
+        _ = try register(preview: sample, final: sample,
+            input: Input(crop: [0,0,1,1], frame: [0.4,0.3,0.2,0.2], angle: angle))
+        fatalError("invalid angle accepted")
+    } catch { }
+}
 for (name, fixture) in [("sample",sample), ("flat",flat)] {
     try context.writeJPEGRepresentation(of: fixture, to: folder.appendingPathComponent(name+".jpg"),
                                        colorSpace: CGColorSpaceCreateDeviceRGB())
 }
-print("PASS: 15 registration cases (including all orientations, asymmetric crop, local mismatch and invalid orientation)")
+print("PASS: 83 registration cases (including straighten, all orientations, asymmetric crop and rejection guards)")

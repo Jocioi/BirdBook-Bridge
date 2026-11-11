@@ -61,6 +61,31 @@ for my $o (1..8) {
     ok(@actual==7 && !(grep { abs($actual[$_+3]-$expected[$o-1][$_])>0.00000001 } 0..3),
         "asymmetric crop orientation $o preserves recorded frame coordinates");
 }
+# Independent 3-4-5 triangle fixture: a 400 x 300 crop rotated in a 1500 x 1000 source.
+for my $sign (-1,1) { for my $o (1..8) {
+    my $a=$sign*atan2(3,4)*180/atan2(0,-1);
+    my ($dx,$dy)=(0.8*400-$sign*0.6*300,$sign*0.6*400+0.8*300);
+    my %s=(%source,Orientation=>$o,FocusLocation=>'1500 1000 780 520',FocusFrameSize=>'50 30 257');
+    my %d=(%export,HasCrop=>1,CropAngle=>$a,CropLeft=>(750-$dx/2)/1500,CropRight=>(750+$dx/2)/1500,
+        CropTop=>(500-$dy/2)/1000,CropBottom=>(500+$dy/2)/1000,
+        ImageWidth=>($o>=5?300:400),ImageHeight=>($o>=5?400:300));
+    my ($status,$value)=BirdBook::FocusFrame::for_export(\%s,\%d,1);
+    is($status,'available',"rotation $sign orientation $o geometry accepted");
+    my ($x,$y,$w,$h)=($sign==1?0.5175:0.4575,$sign==1?121/300:157/300,58/400,54/300);
+    my @want=([$x,$y,$w,$h],[1-$x-$w,$y,$w,$h],[1-$x-$w,1-$y-$h,$w,$h],[$x,1-$y-$h,$w,$h],
+        [$y,$x,$h,$w],[1-$y-$h,$x,$h,$w],[1-$y-$h,1-$x-$w,$h,$w],[$y,1-$x-$w,$h,$w]);
+    my @v=split ' ',($value//'');
+    ok(@v==7 && !(grep {abs($v[$_+3]-$want[$o-1][$_])>1e-8} 0..3),"rotation $sign orientation $o independently calculated corners");
+} }
+my %edge=(%export,HasCrop=>1,CropLeft=>0.49,CropTop=>0.25,CropRight=>0.99,CropBottom=>0.75);
+($state,$frame)=BirdBook::FocusFrame::for_export(\%source,\%edge);
+is($state,'available','partially cropped frame with visible centre retained');
+@v=split ' ',$frame;
+ok(abs($v[3])<1e-9 && abs($v[5]-0.12)<1e-9,'partial frame clipped at image boundary');
+for my $angle ('NaN','Inf',46,-46) {
+    my %d=(%crop,CropAngle=>$angle);
+    is((BirdBook::FocusFrame::for_export(\%source,\%d,1))[0],'unsupported-edits',"invalid angle $angle rejected");
+}
 ok(!defined(BirdBook::RegisterFocus::for_export('unused','unused',\%source,\%export,'/nonexistent/bbb-helper')),
    'missing registration helper fails closed');
 is(BirdBook::Info::clean('  AF-C  '),'AF-C','text trimmed');
@@ -110,6 +135,8 @@ is($info->{OriginalFileName},(File::Basename::basename($fixture)),'filename fall
 is(BirdBook::Info::clean_setting('BatteryLevel','53%'),'53%','valid battery level retained');
 ok(!defined(BirdBook::Info::clean_setting('WhiteBalance','Auto',{WhiteBalance=>0})),'native auto white balance is not duplicated');
 ok(!defined(BirdBook::Info::clean_setting('WhiteBalance','Manual',{WhiteBalance=>1})),'native manual white balance is not duplicated');
+ok(!defined(BirdBook::Info::clean_setting('WhiteBalance','Auto',{WhiteBalance=>'Auto'})),'text-form auto white balance is not numerically coerced');
+ok(!defined(BirdBook::Info::clean_setting('WhiteBalance','Manual',{WhiteBalance=>'Manual'})),'text-form manual white balance is not numerically coerced');
 is(BirdBook::Info::clean_setting('WhiteBalance','Daylight',{WhiteBalance=>1}),'Daylight','more specific capture preset retained');
 ok(!defined(BirdBook::Info::clean_setting('BatteryLevel','101%')),'out-of-range battery omitted');
 is(BirdBook::Info::clean_setting('AmbientTemperature','-5 C'),'-5 C','negative capture temperature retained');

@@ -1,5 +1,12 @@
 # Validation and limitations
 
+## Version 1.3.5 — straighten rotation, 2026-11-11
+
+- Passed 116 metadata/geometry assertions, 75 generated-format assertions, 83 Swift registration cases, 4 compiled-helper CLI cases and 21 isolated mocked Lua flow cases (299 total); 245 pinned library hashes match.
+- Non-square crops, both signs of rotation through 45 degrees, all 8 EXIF orientations, reversed crop diagonals, partial clipping and invalid angles are covered. Existing texture, local-content, displacement and round-trip guards remain.
+- A real ARW/JPEG pair with -1.83 degree straighten, cropping and Adobe lens correction produces a registered reference frame on a copy. Previously fixed portrait/profile samples are regression checked. Source photographs are kept outside the package and remain unchanged.
+- No fresh Lightroom UI export or physical Duo visual acceptance of this revision; file-level helper/readback checks do not establish those. Intel compiles but remains untested on hardware.
+
 ## Version 1.3.4 — portrait crop fix, 2026-11-09
 
 - Passed 76 metadata/geometry assertions, 75 generated-format assertions, 15 Swift registration cases and 4 compiled-helper CLI cases. All-orientation asymmetric crops and rejection of locally mismatched imagery are covered; vendor hashes match. Lua flow code is unchanged; 21 mocked export-flow cases also pass using Lightroom’s installed Lua runtime in an isolated process.

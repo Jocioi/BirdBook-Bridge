@@ -7,5 +7,5 @@ return {
         file = 'FocusFilter.lua',
         id = 'sonyFocus',
     },
-    VERSION = { major = 1, minor = 3, revision = 4 },
+    VERSION = { major = 1, minor = 3, revision = 5 },
 }

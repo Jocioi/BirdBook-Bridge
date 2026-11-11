@@ -8,13 +8,13 @@ use Image::ExifTool;
 sub for_export {
     my ($raw, $jpeg, $src, $dst, $helper) = @_;
     return if ($src->{FileType} // '') eq 'JPEG';
-    return unless -x $helper && ($dst->{LensProfileEnable} // 0) == 1
+    return unless -x $helper && (($dst->{LensProfileEnable} // 0) == 1 || abs($dst->{CropAngle} // 0) > 0.000001)
         && ($src->{Orientation} // 1) =~ /^[1-8]$/ && defined($src->{DistortionCorrection})
         && $src->{DistortionCorrection} == 0 && ($src->{DistortionCorrectionSetting} // -1) == 0;
-    # Keep every other geometry guard; registration is only validated for mild lens correction.
+    # Straighten is deterministic; registration verifies the result and any mild lens correction.
     my %uncorrected = %$dst;
     $uncorrected{LensProfileEnable} = 0;
-    my ($state, $frame) = BirdBook::FocusFrame::for_export($src, \%uncorrected);
+    my ($state, $frame) = BirdBook::FocusFrame::for_export($src, \%uncorrected, 1);
     return unless $state eq 'available';
     my @frame = split ' ', $frame;
     my $crop = ($dst->{HasCrop} // '') =~ /^(True|1)$/i;
@@ -28,7 +28,7 @@ sub for_export {
     print {$preview} $$data; close $preview or return;
     open my $config, '>', "$dir/input.json" or return;
     print {$config} encode_json({crop=>[$l,$t,$r-$l,$b-$t], frame=>[map {0+$_} @frame[3..6]],
-        orientation=>0+($src->{Orientation} // 1)});
+        orientation=>0+($src->{Orientation} // 1), angle=>0+($dst->{CropAngle} // 0)});
     close $config or return;
     # List-form process launch preserves filenames, with no shell evaluation.
     my $pid = open my $output, '-|', $helper, "$dir/preview.jpg", $jpeg, "$dir/input.json";
