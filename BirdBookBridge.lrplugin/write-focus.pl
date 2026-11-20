@@ -26,7 +26,7 @@ my @dst = stat $jpeg;
 die "Source and destination must differ\n" if $src[0] == $dst[0] && $src[1] == $dst[1];
 my $reader = Image::ExifTool->new;
 $reader->Options(PrintConv => 0);
-my $tags = $reader->ImageInfo($raw, qw(FileType Model Sony:FocusPosition2 Composite:FocusDistance2
+my $tags = $reader->ImageInfo($raw, qw(FileType Model Sony:FocusPosition2
                                     EXIF:DistortionCorrection Sony:DistortionCorrectionSetting Sony:FocusMode Sony:FocusLocation Sony:FocusFrameSize EXIF:Orientation Error),
                                     map { "EXIF:$_" } @BirdBook::Info::standard);
 die "Could not read source image\n" if $tags->{Error};
@@ -42,8 +42,10 @@ my $existing = $writer->ImageInfo($jpeg, qw(FileType XMP-aux:ApproximateFocusDis
     XMP-crs:PerspectiveHorizontal XMP-crs:PerspectiveVertical XMP-crs:PerspectiveRotate XMP-crs:PerspectiveAspect
     XMP-crs:PerspectiveX XMP-crs:PerspectiveY XMP-crs:PerspectiveScale Error), @BirdBook::Info::standard);
 die "Expected JPEG, TIFF or PNG output\n" unless !$existing->{Error} && ($existing->{FileType} // '') =~ /^(JPEG|TIFF|PNG)$/;
-my $code = $tags->{FocusPosition2} // 0;
-my $meters = $code == 255 ? 4294967295 : $tags->{FocusDistance2};
+my $code = ($tags->{FocusPosition2} // '') =~ /^\d+\z/ ? 0 + $tags->{FocusPosition2} : 0;
+my $focal = ($tags->{FocalLength} // '') =~ /^\d+(?:\.\d+)?\z/ ? 0 + $tags->{FocalLength} : 0;
+my $meters = $code == 255 ? 4294967295
+    : ($code >= 1 && $code < 255 && $focal > 0 ? ((2 ** ($code / 16 - 5)) + 1) * $focal / 1000 : undef);
 if (!defined $existing->{ApproximateFocusDistance} && $code > 0 && $code <= 255
     && defined $meters && $meters > 0 && ($code == 255 || $meters < 4294967295)) {
     $writer->SetNewValue('XMP-aux:ApproximateFocusDistance', $meters, Type => 'ValueConv') or die "Invalid focus distance\n";

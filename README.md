@@ -1,6 +1,6 @@
 # 波斑鸨插件 · BirdBook Bridge（BBB）
 
-公开版本：**1.3.5 开发预览版**。
+公开版本：**1.3.6 开发预览版**。
 
 **把原片中 Lightroom 没有带出的拍摄信息，补进导出成片。**
 
@@ -40,13 +40,13 @@ LR 已导出的标准字段由读取软件直接使用，BBB 不重复保存；�
 
 标准 EXIF 的字段有特定含义。基础曝光参数有对应字段；索尼的动物眼部追踪、实际 AF 区域等没有等价的通用字段。EXIF 的 `SubjectArea` / `SubjectLocation` 表达主被摄体区域或位置，并不能完整表达相机 AF 框及校正后的估计状态。把这些数据塞进不对应的字段，会使读取软件误解。
 
-标准 EXIF 确实有 `SubjectDistance`。本插件的距离来自索尼距离编码及 ExifTool 计算，是**估计值**，因此使用已有的 Adobe `ApproximateFocusDistance` 字段，避免丢失“估计”语义。XMP 与 EXIF 都内嵌在同一个 JPG 中，无需额外 sidecar；普通软件可能只显示它认识的字段。
+标准 EXIF 确实有 `SubjectDistance`。本插件的距离来自索尼对焦编码和实际焦距，是**估计值**，因此使用已有的 Adobe `ApproximateFocusDistance` 字段，避免丢失“估计”语义。XMP 与 EXIF 都内嵌在同一个 JPG 中，无需额外 sidecar；普通软件可能只显示它认识的字段。
 
 ## 安装和使用
 
 首次完成三步：
 
-1. **添加插件。**从 [Releases](https://github.com/Jocioi/BirdBook-Bridge/releases) 下载 `BirdBook-Bridge-1.3.5.zip` 并解压，将 `BirdBookBridge.lrplugin` 放到固定目录，在 Lightroom Classic → **文件 → 增效工具管理器 / Plug-in Manager → 添加** 中选择并启用。也可按下节从源码构建。
+1. **添加插件。**从 [Releases](https://github.com/Jocioi/BirdBook-Bridge/releases) 下载 `BirdBook-Bridge-1.3.6.zip` 并解压，将 `BirdBookBridge.lrplugin` 放到固定目录，在 Lightroom Classic → **文件 → 增效工具管理器 / Plug-in Manager → 添加** 中选择并启用。也可按下节从源码构建。
 2. **加入导出流程。**在导出窗口的 **后期处理动作 / Post-Process Actions** 中插入 **波斑鸨插件 (BBB)**。
 3. **保存预设。**选择 **JPEG、TIFF 或 PNG**，元数据选择 **所有元数据 / All Metadata**，保存为自己的导出预设，例如「BBB 信息补全」。
 
@@ -71,7 +71,7 @@ sh scripts/build.sh
 sh scripts/test.sh
 ```
 
-构建结果：`dist/BirdBookBridge.lrplugin` 和 `dist/BirdBook-Bridge-1.3.5.zip`。辅助程序分别编译 arm64 / x86_64，再合成通用二进制。构建脚本不安装插件，也不修改 Lightroom 设置。
+构建结果：`dist/BirdBookBridge.lrplugin` 和 `dist/BirdBook-Bridge-1.3.6.zip`。辅助程序分别编译 arm64 / x86_64，再合成通用二进制。构建脚本不安装插件，也不修改 Lightroom 设置。
 
 本项目提供源码及本地构建产物，不含 Apple 开发者分发签名或公证。请按系统正常安全流程处理下载提示，不要全局关闭安全保护。
 

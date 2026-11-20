@@ -103,4 +103,31 @@ is($status,"unsupported-camera\n",'unsupported camera is explicitly reported');
 is(bytes($out),$before,'unsupported source leaves export bytes unchanged');
 ok(system('/usr/bin/perl',$helper,$source,$source)!=0,'source cannot be overwritten in place');
 is(bytes($source),$original,'source protected after rejected in-place write');
+my $arw="$dir/apsc.ARW";
+my @buf=(0)x700;
+sub put_le { my($a,$v,$o,$w)=@_; for my $i (0..$w-1){ $a->[$o+$i]=($v>>(8*$i))&255; } }
+sub tiff_entry { my($a,$o,$t,$ty,$c,$v)=@_; put_le($a,$t,$o,2); put_le($a,$ty,$o+2,2); put_le($a,$c,$o+4,4); put_le($a,$v,$o+8,4); }
+$buf[0]=0x49; $buf[1]=0x49; put_le(\@buf,42,2,2); put_le(\@buf,8,4,4);
+put_le(\@buf,3,8,2);
+tiff_entry(\@buf,10,0x10f,2,5,50);
+tiff_entry(\@buf,22,0x110,2,9,60);
+tiff_entry(\@buf,34,0x8769,4,1,100);
+@buf[50..54]=unpack('C*',"SONY\0");
+@buf[60..68]=unpack('C*',"ILCE-1M2\0");
+put_le(\@buf,3,100,2); tiff_entry(\@buf,102,0x920a,5,1,160); tiff_entry(\@buf,114,0xa405,3,1,900); tiff_entry(\@buf,126,0x927c,7,450,200);
+put_le(\@buf,600,160,4); put_le(\@buf,1,164,4);
+put_le(\@buf,2,200,2); tiff_entry(\@buf,202,0x201b,1,1,2); tiff_entry(\@buf,214,0x9402,7,400,250);
+sub enc9402 { my($n)=@_; return $n<249 ? ($n*$n*$n)%249 : $n; }
+$buf[250]=enc9402(41); $buf[251]=enc9402(1); $buf[272]=enc9402(2); $buf[295]=enc9402(187);
+open my $af,'>:raw',$arw or die $!; print $af pack('C*',@buf); close $af or die $!;
+my $apsc_out="$dir/apsc-export.jpg";
+copy("$fixtures/image.jpg",$apsc_out) or die $!;
+ok(system('/usr/bin/perl',$helper,$arw,$apsc_out)==0,'APS-C ARW focus distance export succeeds');
+require "$FindBin::Bin/../BirdBookBridge.lrplugin/BirdBookInfo.pm";
+BirdBook::Info::register();
+my $check=Image::ExifTool->new; $check->Options(PrintConv=>0);
+my $apsc_info=$check->ImageInfo($apsc_out,'XMP-aux:ApproximateFocusDistance','XMP-bbinfo:FocusPosition2');
+is($apsc_info->{FocusPosition2},'187','APS-C FocusPosition2 preserved');
+ok(defined($apsc_info->{ApproximateFocusDistance}) && abs($apsc_info->{ApproximateFocusDistance} - 62.44236) < 0.05,
+   'APS-C ApproximateFocusDistance uses 600mm physical focal length instead of 900mm 35mm equivalent');
 done_testing();

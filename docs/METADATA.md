@@ -12,7 +12,7 @@ Dates, GPS, serial numbers, dimensions, orientation, colour profiles and editing
 
 ## Estimated distance
 
-`XMP-aux:ApproximateFocusDistance` is written only when absent, using Sony `FocusPosition2` and ExifTool's `Composite:FocusDistance2`. A code of 255 maps to the field's infinity sentinel, 4294967295. Unknown and invalid distances are omitted. This is an estimate, not a measured subject distance.
+`XMP-aux:ApproximateFocusDistance` is written only when absent, using Sony `FocusPosition2` and physical `EXIF:FocalLength`, with no 35 mm equivalent conversion. A code of 255 maps to the field's infinity sentinel, 4294967295. Unknown and invalid distances are omitted. This is an estimate, not a measured subject distance.
 
 ## Capture settings: `bbinfo`
 
